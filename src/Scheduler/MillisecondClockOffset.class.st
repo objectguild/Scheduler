@@ -21,8 +21,6 @@ MillisecondClockOffset class >> getMilliSecondOffset [
 { #category : #'as yet unclassified' }
 MillisecondClockOffset class >> initialize [
 
-	super initialize.
-
 	Smalltalk addToStartUpList: self.
 ]
 
