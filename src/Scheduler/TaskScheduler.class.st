@@ -17,54 +17,43 @@ TaskScheduler class >> new [
 
 { #category : #scheduling }
 TaskScheduler >> addTask: aScheduledTask [
-
-	^ accessProtect critical: [tasks add: aScheduledTask]
+	^ accessProtect critical: [ tasks add: aScheduledTask ]
 ]
 
 { #category : #scheduling }
 TaskScheduler >> do: aBlock at: when [
-
 	^ self do: aBlock at: when every: 1 day
 ]
 
 { #category : #scheduling }
 TaskScheduler >> do: aBlock at: when every: aDuration [
+	| newTask |
 
-	| task |
-	task := ScheduledTask new
+	newTask := ScheduledTask new 
 		scheduler: self;
 		task: aBlock;
-		startDateAndTime: when
-		duration: aDuration;
-		yourself.
-	^ self addTask: task.
+		startDateAndTime: when duration: aDuration.
+	^ self addTask: newTask.
 ]
 
 { #category : #scheduling }
 TaskScheduler >> do: aBlock every: aDuration [
-
-	| task |
-	task := self do: aBlock at: Time now every: aDuration.
-	^ task
-		run;
-		yourself.
+	^ self do: aBlock at: Time now every: aDuration
 ]
 
 { #category : #scheduling }
 TaskScheduler >> do: aBlock following: aSchedule [
+	| newTask |
 
-	| task |
-	task := ScheduledTask new
+	newTask := ScheduledTask new 
 		scheduler: self;
 		task: aBlock;
-		schedule: aSchedule;
-		yourself.
-	^ self addTask: task
+		schedule: aSchedule.
+	^ self addTask: newTask.
 ]
 
 { #category : #scheduling }
 TaskScheduler >> doOnce: aBlock at: when [
-
 	^ self do: aBlock at: when every: Duration zero
 ]
 
@@ -86,63 +75,59 @@ TaskScheduler >> isRunning [
 TaskScheduler >> printOn: aStream [
 
 	aStream
-		nextPutAll: 'Task scheduler is ', (running ifTrue: ['running'] ifFalse: ['stopped']);
-		nextPutAll: ' with ', self taskCount asWords, ' tasks'
+		nextPutAll: 'Task scheduler is ';
+		nextPutAll: (running ifTrue: [ 'running' ] ifFalse: [ 'stopped' ]);
+		nextPutAll: ' with ';
+		nextPutAll: self taskCount asWords;
+		nextPutAll: ' tasks'.
 ]
 
 { #category : #scheduling }
 TaskScheduler >> removeTask: aScheduledTask [
-
 	accessProtect critical: [tasks remove: aScheduledTask]
 ]
 
 { #category : #executing }
 TaskScheduler >> start [
-
 	| process |
-	running ifTrue: [^ self].
-	
-	running := true.
-	
-	process := [
-		[running] whileTrue: 
-			[0.25 seconds asDelay wait.
-			self tasksDo: [:each | each runIfNecessary]]] newProcess.
-	
-	(process respondsTo: #name:) ifTrue: [process name: 'taskScheduler'].
-	
-	process priority: Processor systemBackgroundPriority.
-	
-	process resume.
 
+	running ifTrue: [ ^ self ].
+	running := true.
+
+	process := [ 
+		[ running ] whileTrue: 
+			[ 
+				250 milliSeconds wait.
+				self tasksDo: [ :each | 
+					each runIfNecessary ] ] ] newProcess.
+
+	process 
+		name: 'taskScheduler';
+		priority: Processor systemBackgroundPriority;
+		resume.
 ]
 
 { #category : #executing }
 TaskScheduler >> stop [
-
 	running := false
 ]
 
 { #category : #accessing }
 TaskScheduler >> taskAt: aNumber [
-
-	^ accessProtect critical: [tasks at: aNumber]
+	^ accessProtect critical: [ tasks at: aNumber ]
 ]
 
 { #category : #accessing }
 TaskScheduler >> taskCount [
-
-	^ accessProtect critical: [tasks size]
+	^ accessProtect critical: [ tasks size ]
 ]
 
 { #category : #private }
 TaskScheduler >> tasks [
-
-	accessProtect critical: [ ^ tasks copy ].
+	accessProtect critical: [ ^ tasks copy ]
 ]
 
 { #category : #accessing }
 TaskScheduler >> tasksDo: aOneArgBlock [
-	
-	^ self tasks do: aOneArgBlock
+	self tasks do: aOneArgBlock
 ]

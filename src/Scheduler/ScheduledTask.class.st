@@ -21,59 +21,52 @@ ScheduledTask class >> new [
 
 { #category : #private }
 ScheduledTask >> convertToTimeParameter: parameter [
-
-	^ [parameter asDateAndTime] on: Error do: [Time readFrom: parameter readStream]
+	^ [ parameter asDateAndTime ] on: Error do: [ Time readFrom: parameter readStream ]
 ]
 
 { #category : #executing }
 ScheduledTask >> delete [
-
 	scheduler removeTask: self
 ]
 
 { #category : #accessing }
 ScheduledTask >> description [
-
 	^ description
 ]
 
 { #category : #accessing }
 ScheduledTask >> description: aString [
-
 	description := aString
 ]
 
 { #category : #initialization }
 ScheduledTask >> initialize [
-
-	runHistory := OrderedCollection new
+	runHistory := OrderedCollection new.
 ]
 
 { #category : #testing }
 ScheduledTask >> isActive [
-
-	^ scheduler isRunning.
+	^ scheduler isRunning
 ]
 
 { #category : #testing }
 ScheduledTask >> isRunning [
 
-	workerProcess ifNil: [^ false].
-	
-	^ workerProcess isTerminated not
+	workerProcess ifNil: [ ^ false ].
+
+	^ workerProcess isTerminated not.
 ]
 
 { #category : #testing }
 ScheduledTask >> isSuspended [
 
-	workerProcess ifNil: [^ false].
-	
-	^ workerProcess isTerminated not and: [workerProcess isSuspended]
+	workerProcess ifNil: [ ^ false ].
+
+	^ workerProcess isTerminated not and: [ workerProcess isSuspended ].
 ]
 
 { #category : #accessing }
 ScheduledTask >> nextRunTime [
-
 	^ nextRunTime
 ]
 
@@ -81,50 +74,48 @@ ScheduledTask >> nextRunTime [
 ScheduledTask >> printOn: aStream [
 
 	aStream nextPutAll: 'Scheduled Task'; cr.
-	self description ifNotNil: [aStream nextPutAll: self description; cr].
+	self description ifNotNil: [ aStream nextPutAll: self description; cr ].
 	
-	self isRunning ifTrue: [aStream nextPutAll: 'CURRENTLY RUNNING !!'].
-	self isSuspended ifTrue: [aStream nextPutAll: ' (suspended)'].
+	self isRunning ifTrue: [ aStream nextPutAll: 'CURRENTLY RUNNING!' ].
+	self isSuspended ifTrue: [ aStream nextPutAll: '(suspended)' ].
 	
 	aStream
 		cr;
-		nextPutAll: 'Next Run Time : ', self nextRunTime asString;
+		nextPutAll: 'Next Run Time: ';
+		nextPutAll: self nextRunTime asString;
 		cr;
-		nextPutAll: 'Last Run Time : ', (runHistory isEmpty 
-			ifTrue: ['<never run>']
-			ifFalse: [runHistory last asString]).
+		nextPutAll: 'Last Run Time: ';
+		nextPutAll: (runHistory ifEmpty: [ '<never run>' ] ifNotEmpty: [ runHistory last asString ]).
 ]
 
 { #category : #executing }
 ScheduledTask >> resume [
-
-	self isSuspended ifTrue: [workerProcess resume]
+	self isSuspended ifTrue: [ workerProcess resume ]
 ]
 
 { #category : #executing }
 ScheduledTask >> run [
 
-	workerProcess := [[task value] ensure: [runHistory add: DateAndTime now]] fork.
-
-	self wasRun
+	workerProcess := [ [ task value ] ensure: [ runHistory add: DateAndTime now ] ] fork.
+	self wasRun.
 ]
 
 { #category : #accessing }
 ScheduledTask >> runHistory [
-
 	^ runHistory
 ]
 
-{ #category : #private }
+{ #category : #executing }
 ScheduledTask >> runIfNecessary [
-	"For TaskScheduler only. To run manually, send #run"
 
-	((DateAndTime now >= self nextRunTime) and: [self isRunning not]) ifTrue: [self run]
+	self isRunning ifTrue: [ ^ self ].
+	self nextRunTime > DateAndTime now ifTrue: [ ^ self ].
+	
+	self run.
 ]
 
 { #category : #accessing }
 ScheduledTask >> schedule [
-
 	^ schedule
 ]
 
@@ -134,25 +125,21 @@ ScheduledTask >> schedule: aSchedule [
 	schedule := aSchedule.
 	nextRunTime := schedule start.
 	
-	self setNextRunTime
-	
+	self setNextRunTime.
 ]
 
 { #category : #private }
 ScheduledTask >> scheduleHasOnlyZeroDuration [
-
-	^ schedule schedule size = 1 and: [schedule schedule first = Duration zero]
+	^ schedule schedule size = 1 and: [ schedule schedule first = Duration zero ]
 ]
 
 { #category : #accessing }
 ScheduledTask >> scheduler [
-
 	^ scheduler
 ]
 
 { #category : #accessing }
 ScheduledTask >> scheduler: aTaskScheduler [
-
 	scheduler := aTaskScheduler
 ]
 
@@ -161,30 +148,28 @@ ScheduledTask >> setNextRunTime [
 
 	self scheduleHasOnlyZeroDuration ifTrue: [^ self].
 	
-	schedule scheduleDo:
-		[:each | (each > DateAndTime now) ifTrue: [nextRunTime := each. ^ self]].
+	schedule scheduleDo: [ :each | 
+		(each > DateAndTime now) ifTrue: [ 
+			nextRunTime := each.
+			^ self ] ].
 	
-	self delete "delete if no more scheduled tasks"
+	self delete. "Delete if no more scheduled tasks"
 ]
 
 { #category : #accessing }
 ScheduledTask >> startDateAndTime: aDateAndTime duration: aDuration [
-
 	| timeParameter |
+
 	timeParameter := self convertToTimeParameter: aDateAndTime.
 	 
-	nextRunTime := ((timeParameter isKindOf: Time)
-		ifTrue:
-			[DateAndTime date: Date today time: timeParameter]
-		ifFalse:
-			[timeParameter]).
+	nextRunTime := (timeParameter isKindOf: Time) 
+		ifTrue: [ DateAndTime date: Date today time: timeParameter ]
+		ifFalse: [ timeParameter ].
 			
 	schedule := Schedule starting: self nextRunTime duration: 1000 weeks.
-	schedule schedule: {aDuration}.	
+	schedule schedule: { aDuration }.
 		
-	self setNextRunTime
-
-
+	self setNextRunTime.
 ]
 
 { #category : #accessing }
@@ -198,36 +183,27 @@ ScheduledTask >> statusDescription [
 
 { #category : #executing }
 ScheduledTask >> stop [
-
-	self isRunning ifTrue: [workerProcess terminate]
-
-	
+	self isRunning ifTrue: [ workerProcess terminate ]
 ]
 
 { #category : #executing }
 ScheduledTask >> suspend [
-
-	self isRunning ifTrue: [workerProcess suspend]
-
-	
+	self isRunning ifTrue: [ workerProcess suspend ]
 ]
 
 { #category : #accessing }
 ScheduledTask >> task [
-
 	^ task
 ]
 
 { #category : #accessing }
 ScheduledTask >> task: aBlock [
-
 	task := aBlock
 ]
 
-{ #category : #private }
+{ #category : #executing }
 ScheduledTask >> wasRun [
 
-	self scheduleHasOnlyZeroDuration ifTrue: [self delete].
-	
-	self setNextRunTime
+	self scheduleHasOnlyZeroDuration ifTrue: [ self delete ].
+	self setNextRunTime.
 ]
