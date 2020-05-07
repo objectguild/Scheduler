@@ -13,12 +13,6 @@ Class {
 	#category : #Scheduler
 }
 
-{ #category : #'as yet unclassified' }
-ScheduledTask class >> new [
-
-	^ super new initialize
-]
-
 { #category : #private }
 ScheduledTask >> convertToTimeParameter: parameter [
 	^ [ parameter asDateAndTime ] on: Error do: [ Time readFrom: parameter readStream ]
