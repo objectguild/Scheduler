@@ -84,7 +84,8 @@ TaskScheduler >> printOn: aStream [
 
 { #category : #scheduling }
 TaskScheduler >> removeTask: aScheduledTask [
-	accessProtect critical: [tasks remove: aScheduledTask]
+	accessProtect critical: [ 
+		tasks remove: aScheduledTask ifAbsent: nil ]
 ]
 
 { #category : #executing }
